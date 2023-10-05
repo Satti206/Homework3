@@ -17,14 +17,12 @@ public class UsersRepositoryJdbcImpl implements UsersRepository {
     private Statement statement;
 
     private static final String SQL_SELECT_ALL_FROM_DRIVER = "select * from driver";
-    private static final String SQL_INSERT_INTO_USERS = "insert into driver(login,password,first_name,last_name) values ";
-
+    private static final String SQL_INSERT_INTO_USERS = "insert into driver(login,password,name,surname) values ";
 
     public UsersRepositoryJdbcImpl(Connection connection, Statement statement) {
         this.statement = statement;
         this.connection = connection;
     }
-
     @Override
     public List findAllByAge() {
         try {
@@ -38,31 +36,26 @@ public class UsersRepositoryJdbcImpl implements UsersRepository {
                         .surname(resultSet.getString("surname"))
                         .build();
                 result.add(user);
-//                if (user.getAge().equals(age)) {
-//                    result.add(user);
-//                }
-            }
+              }
+
             if (result.isEmpty()) {
                 System.out.println("По введенному возврасту ничего не найдено...");
             }
             return result;
         } catch (SQLException e) {
-            throw new IllegalStateException(e);
         }
+        return null;
     }
 
     @Override
     public void save(User entity) {
-        String sql = SQL_INSERT_INTO_USERS + "('" + entity.getLogin() + "', '" + entity.getPassword() + "', '" + entity.getName() + "', '" +entity.getSurname() + "');";
+        String sql = SQL_INSERT_INTO_USERS + "('" + entity.getLogin() + "', '" + entity.getPassword() + "', '" + entity.getName() + "', '" + entity.getSurname() + "');";
         try {
             statement.executeUpdate(sql);
         } catch (SQLException e) {
             throw new IllegalArgumentException(e);
         }
-        System.out.println(entity.getLogin() + " " + entity.getPassword() + " " + entity.getName() + " " + entity.getSurname());
-
     }
-
     @Override
     public List<User> findAll() {
         return null;
@@ -70,6 +63,25 @@ public class UsersRepositoryJdbcImpl implements UsersRepository {
 
     @Override
     public Optional<User> findByLogin(User login) {
+        try {
+            String username = login.getLogin();
+            String password = login.getPassword();
+
+            String sql = "SELECT * FROM driver WHERE login = '" + username + "' AND password = '" + password + "'";
+            ResultSet resultSet = statement.executeQuery(sql);
+
+            if (resultSet.next()) {
+                User user = User.builder()
+                        .id(resultSet.getLong("id"))
+                        .name(resultSet.getString("name"))
+                        .surname(resultSet.getString("surname"))
+                        .build();
+                return Optional.of(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         return Optional.empty();
     }
 }
